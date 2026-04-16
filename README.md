@@ -1,4 +1,5 @@
-# AI-Powered-Skill-Bridge
+# ⚡ SkillBridge — AI-Powered Career Gap Analyzer
+
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?style=flat-square&logo=flask)
 ![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-00a67e?style=flat-square&logo=meta)
@@ -231,7 +232,10 @@ pip install -r requirements.txt
 ---
 
 ## Future Work
+
+- [ ] Export full analysis as a PDF report
 - [ ] Save and compare multiple analyses per user
+- [ ] LinkedIn profile URL input — auto-parse CV from profile
 - [ ] Job board integration — auto-fetch job descriptions from URL
 - [ ] Backend database for persistent user accounts
 - [ ] Rate limiting and usage quotas for public deployment

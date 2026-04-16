@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillBridge | Career Gap Analyser</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0a0c10;
+      --bg-card: rgba(23, 28, 38, 0.72);
+      --bg-card-solid: #111827;
+      --teal: #2dd4bf;
+      --blue: #3b82f6;
+      --teal-dim: rgba(45, 212, 191, 0.1);
+      --blue-dim: rgba(59, 130, 246, 0.1);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.1);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.1);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245, 158, 11, 0.1);
+      --purple: #8b5cf6;
+      --purple-dim: rgba(139, 92, 246, 0.1);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-teal: rgba(45, 212, 191, 0.25);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .glow-1 { position: fixed; width: 620px; height: 620px; top: -220px; right: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(45,212,191,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .glow-2 { position: fixed; width: 520px; height: 520px; bottom: -180px; left: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .z { position: relative; z-index: 1; }
+    .glass {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .pg { display: none; }
+    .pg.on { display: block; animation: fadeUp .35s ease-out; }
+    .pg-center { display: none; }
+    .pg-center.on { display: flex; animation: fadeUp .35s ease-out; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes confettiFall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .grad-text {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,12,16,.9);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 600;
+      transition: .2s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      color: #fff;
+      padding: 14px 20px;
+      box-shadow: 0 4px 24px rgba(45,212,191,.2);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(45,212,191,.3); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 10px 16px;
+    }
+    .btn-ghost:hover { border-color: var(--border-teal); color: var(--teal); }
+    .tab {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: .2s;
+    }
+    .tab.on { background: var(--teal-dim); color: var(--teal); }
+    .lbl {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .inp {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 14px;
+      padding: 13px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .inp:focus { border-color: rgba(45,212,191,.5); box-shadow: 0 0 0 3px rgba(45,212,191,.08); }
+    .inp::placeholder { color: var(--text-dim); }
+    select.inp { color: var(--text); }
+    select.inp option { background: #111827; color: #ffffff; }
+    .bar-track { background: rgba(255,255,255,.07); border-radius: 999px; height: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--teal), var(--blue)); transition: width 1s cubic-bezier(0.22,1,0.36,1); }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-circle { stroke-dasharray: 251; stroke-dashoffset: 251; transition: stroke-dashoffset 1.3s cubic-bezier(0.22,1,0.36,1); }
+    .assessment-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      transition: border-color .2s, background .2s;
+    }
+    .assessment-option:hover { border-color: var(--border-teal); background: var(--teal-dim); }
+    .assessment-option input { margin-top: 2px; accent-color: var(--teal); }
+    .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(45,212,191,.2); border-top-color: var(--teal); animation: spin .7s linear infinite; }
+    .bdg { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .bdg-teal { background: var(--teal-dim); color: var(--teal); }
+    .bdg-blue { background: var(--blue-dim); color: var(--blue); }
+    .bdg-green { background: var(--green-dim); color: var(--green); }
+    .bdg-red { background: var(--red-dim); color: var(--red); }
+    .bdg-amber { background: var(--amber-dim); color: var(--amber); }
+    .bdg-purple { background: var(--purple-dim); color: var(--purple); }
+    .sec-h { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+    .sec-ic { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .hidden { display: none !important; }
+    /* Course card */
+    .course-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      transition: border-color .2s, background .2s, transform .2s;
+      text-decoration: none;
+    }
+    .course-card:hover { border-color: var(--border-teal); background: var(--teal-dim); transform: translateY(-2px); }
+    .course-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    /* Salary card */
+    .salary-pill { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+    /* Confetti */
+    .confetti-piece { position: fixed; width: 8px; height: 8px; border-radius: 2px; pointer-events: none; z-index: 99999; animation: confettiFall 3s ease-in forwards; }
+    /* Readiness bar */
+    .readiness-glow { box-shadow: 0 0 12px rgba(45,212,191,0.4); }
+    /* Timeline */
+    .timeline-item { position: relative; padding-left: 28px; }
+    .timeline-item::before { content: ''; position: absolute; left: 8px; top: 24px; bottom: -8px; width: 1px; background: var(--border); }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-dot { position: absolute; left: 0; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; font-weight: 700; }
+    /* Tabs */
+    .result-tab { padding: 10px 18px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; color: var(--text-muted); background: transparent; cursor: pointer; transition: .2s; white-space: nowrap; }
+    .result-tab.on { background: var(--teal-dim); color: var(--teal); }
+    /* Shimmer skeleton */
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    /* Copy button */
+    .copy-btn { padding: 6px 12px; font-size: 11px; border-radius: 8px; }
+    /* Print */
+    @media print { .nav, .btn, #assessment-panel { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+
+  <nav class="nav z">
+    <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--teal),var(--blue))">
+          <i class="fas fa-bolt text-white text-sm"></i>
+        </div>
+        <span class="font-extrabold text-lg tracking-tight">Skill<span class="grad-text">Bridge</span></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="hidden md:flex items-center gap-1">
+          <button class="tab on" id="nt-home" onclick="goHome()">Analyse</button>
+          <button class="tab" id="nt-results" onclick="showPg('results')" style="display:none">Results</button>
+          <button class="tab" id="nt-how" onclick="showPg('how')">How it works</button>
+        </div>
+        <button id="export-btn" class="btn btn-ghost hidden ml-2" onclick="exportPDF()" title="Export PDF">
+          <i class="fas fa-file-pdf"></i><span class="hidden md:inline">Export PDF</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HOME -->
+  <section id="pg-home" class="pg on z">
+    <div class="max-w-6xl mx-auto px-5 py-14">
+      <div class="text-center mb-14" style="max-width:680px;margin-left:auto;margin-right:auto">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:var(--teal-dim);border:1px solid var(--border-teal)">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:var(--teal);animation:pulse 2s infinite"></span>
+          <span class="text-xs font-semibold tracking-wide" style="color:var(--teal)">Any industry · Any role · Instant AI analysis</span>
+        </div>
+        <h1 class="font-extrabold mb-5" style="font-size:clamp(2.2rem,5vw,3.5rem);letter-spacing:-1.3px;line-height:1.1">
+          Know exactly what's standing between you and your <span class="grad-text">dream job</span>
+        </h1>
+        <p class="text-base leading-relaxed" style="color:var(--text-muted)">
+          Upload your CV and paste any job description. Get an honest skill gap analysis, curated course recommendations, salary insights, and a personalised AI assessment.
+        </p>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="flex items-center justify-center gap-8 mb-10 flex-wrap">
+        <div class="text-center"><p class="font-extrabold text-2xl grad-text">50+</p><p class="text-xs" style="color:var(--text-muted)">Roles supported</p></div>
+        <div style="width:1px;height:32px;background:var(--border)"></div>
+        <div class="text-center"><p class="font-extrabold text-2xl grad-text">AI</p><p class="text-xs" style="color:var(--text-muted)">Powered by Llama 3.3</p></div>
+        <div style="width:1px;height:32px;background:var(--border)"></div>
+        <div class="text-center"><p class="font-extrabold text-2xl grad-text">Free</p><p class="text-xs" style="color:var(--text-muted)">Course links included</p></div>
+      </div>
+
+      <div class="glass p-8 max-w-3xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="lbl">Job title</label>
+            <input id="jt" class="inp" placeholder="e.g. Data Analyst, Product Manager..." />
+          </div>
+          <div>
+            <label class="lbl">Upload CV (PDF / DOCX / TXT)</label>
+            <input id="cf" type="file" accept=".pdf,.doc,.docx,.txt" class="inp" />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="lbl">Or paste CV text</label>
+          <textarea id="cv-txt" rows="5" class="inp" placeholder="Paste your full CV here..."></textarea>
+        </div>
+        <div class="mb-4">
+          <label class="lbl">Job URL (auto-fetch description)</label>
+          <div class="flex gap-2">
+            <input id="job-url" class="inp" placeholder="https://company.com/careers/job-posting" />
+            <button id="fetch-job-btn" class="btn btn-ghost flex-shrink-0" onclick="fetchJobUrl()">
+              <i class="fas fa-cloud-arrow-down"></i> Fetch
+            </button>
+          </div>
+        </div>
+        <div class="glass p-4 mb-4" style="background:rgba(255,255,255,.03)">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="lbl">Role category</label>
+              <select id="role-category" class="inp" onchange="updateRoleOptions()">
+                <option value="Tech">Tech</option>
+                <option value="Non-Tech">Non-Tech</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">Target role</label>
+              <select id="role-select" class="inp" onchange="handleRoleSelection()"></select>
+            </div>
+          </div>
+          <div id="custom-role-wrap" class="hidden mt-4">
+            <label class="lbl">Custom role</label>
+            <input id="custom-role" class="inp" placeholder="Enter your target role manually" oninput="handleRoleSelection()" />
+          </div>
+        </div>
+        <div class="mb-6">
+          <label class="lbl">Job description</label>
+          <textarea id="jd" rows="6" class="inp" placeholder="Paste full job description for best analysis..."></textarea>
+        </div>
+        <button id="ab" class="btn btn-primary w-full text-base" onclick="runAnalysis()">
+          <i class="fas fa-bolt"></i> Analyse My Career Gap
+        </button>
+        <div id="err" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)"></div>
+        <p class="text-center text-xs mt-4" style="color:var(--text-dim)">Your CV data is never stored. Analysis runs in real-time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section id="pg-loading" class="pg-center z min-h-screen items-center justify-center px-4">
+    <div class="text-center max-w-md">
+      <div class="w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-6" style="background:linear-gradient(135deg,var(--teal),var(--blue));animation:pulse 2s infinite">
+        <i class="fas fa-bolt text-white text-4xl"></i>
+      </div>
+      <h2 class="font-bold text-3xl mb-2 tracking-tight">Analysing your profile</h2>
+      <p class="mb-8" style="color:var(--text-muted)">This takes about 15–20 seconds...</p>
+      <div class="glass p-4 text-left" style="max-width:360px;margin:0 auto">
+        <div class="flex items-center gap-3">
+          <div class="spinner flex-shrink-0"></div>
+          <span class="text-sm font-medium" id="ls">Parsing your CV...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="pg-results" class="pg z">
+    <div class="max-w-6xl mx-auto px-5 py-10" id="results-content">
+      <!-- Result tabs -->
+      <div class="flex gap-1 p-1 rounded-xl mb-6 overflow-x-auto" style="background:rgba(255,255,255,0.04);width:fit-content">
+        <button class="result-tab on" onclick="showResultTab('overview')">Overview</button>
+        <button class="result-tab" onclick="showResultTab('courses')"><i class="fas fa-graduation-cap mr-1"></i>Courses</button>
+        <button class="result-tab" onclick="showResultTab('roadmap-tab')">Roadmap</button>
+        <button class="result-tab" onclick="showResultTab('salary')"><i class="fas fa-sack-dollar mr-1"></i>Salary</button>
+        <button class="result-tab" onclick="showResultTab('cv-tips')">CV Tips</button>
+        <button class="result-tab" onclick="showResultTab('alternatives')">Alt Roles</button>
+      </div>
+
+      <!-- Overview tab -->
+      <div id="tab-overview" class="tab-panel">
+        <div id="rc"></div>
+      </div>
+
+      <!-- Courses tab -->
+      <div id="tab-courses" class="tab-panel hidden">
+        <div id="courses-container"></div>
+      </div>
+
+      <!-- Roadmap tab -->
+      <div id="tab-roadmap-tab" class="tab-panel hidden">
+        <div id="roadmap-container"></div>
+      </div>
+
+      <!-- Salary tab -->
+      <div id="tab-salary" class="tab-panel hidden">
+        <div id="salary-container"></div>
+      </div>
+
+      <!-- CV Tips tab -->
+      <div id="tab-cv-tips" class="tab-panel hidden">
+        <div id="cvtips-container"></div>
+      </div>
+
+      <!-- Alternative roles tab -->
+      <div id="tab-alternatives" class="tab-panel hidden">
+        <div id="alt-container"></div>
+      </div>
+
+      <!-- Assessment -->
+      <div id="assessment-panel" class="mt-8">
+        <div class="glass p-6 max-w-3xl mx-auto">
+          <h3 class="text-xl font-bold mb-2"><i class="fas fa-brain mr-2" style="color:var(--purple)"></i>AI Skill Assessment</h3>
+          <p class="text-sm mb-5" style="color:var(--text-muted)">Test your knowledge with AI-generated questions tailored to your target role.</p>
+          <div class="flex gap-1 p-1 rounded-xl mb-4" style="background:rgba(255,255,255,0.04)">
+            <button id="assessment-diff-beginner" class="tab flex-1" onclick="setAssessmentDifficulty('beginner')">Beginner</button>
+            <button id="assessment-diff-intermediate" class="tab on flex-1" onclick="setAssessmentDifficulty('intermediate')">Intermediate</button>
+            <button id="assessment-diff-advanced" class="tab flex-1" onclick="setAssessmentDifficulty('advanced')">Advanced</button>
+          </div>
+          <div id="assessment-start-wrap">
+            <button id="assessment-start-btn" class="btn btn-primary w-full" onclick="startAssessment()">
+              <i class="fas fa-play"></i> Start AI Assessment
+            </button>
+          </div>
+          <div id="assessment-loading" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.25)">
+            <i class="fas fa-spinner fa-spin mr-2"></i>Generating assessment questions...
+          </div>
+          <div id="assessment-error" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)"></div>
+          <div id="assessment-timer-wrap" class="hidden mt-4">
+            <span id="assessment-timer" class="bdg bdg-teal">Timer 00:00</span>
+          </div>
+          <div id="assessment-questions" class="space-y-5 mt-5"></div>
+          <button id="assessment-submit-btn" class="btn btn-primary mt-6 w-full hidden" onclick="submitAssessment()">
+            <i class="fas fa-paper-plane"></i> Submit Assessment
+          </button>
+          <div id="assessment-score" class="hidden mt-5 p-4 rounded-xl" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.25)">
+            <p class="text-sm font-semibold uppercase tracking-wide text-center">Assessment Score</p>
+            <p id="assessment-score-value" class="text-3xl font-extrabold mt-1 text-center">0%</p>
+            <p id="assessment-feedback" class="hidden text-sm mt-3 text-center" style="color:var(--text)"></p>
+            <div id="assessment-weak-skills" class="hidden mt-4"></div>
+            <div id="assessment-skill-scores" class="hidden mt-4 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="pg-how" class="pg z">
+    <div class="max-w-4xl mx-auto px-5 py-20">
+      <div class="text-center mb-12">
+        <h2 class="font-bold text-4xl mb-3 tracking-tight">How <span class="grad-text">SkillBridge</span> works</h2>
+        <p style="color:var(--text-muted)">Four steps to understand exactly where you stand</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">📄</div>
+          <h3 class="font-bold text-lg mb-2">Upload your CV</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Upload PDF/Word or paste CV text. We parse your skills and experience automatically.</p>
+        </div>
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">🎯</div>
+          <h3 class="font-bold text-lg mb-2">Paste the job</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Add the job title or description. Use the URL fetcher for non-LinkedIn job pages.</p>
+        </div>
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">📊</div>
+          <h3 class="font-bold text-lg mb-2">Get your analysis</h3>
+          <p class="text-sm" style="color:var(--text-muted)">See skill gaps, match score, salary range, curated courses, and a step-by-step roadmap.</p>
+        </div>
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">🧠</div>
+          <h3 class="font-bold text-lg mb-2">Take the quiz</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Test your actual knowledge with AI-generated questions at beginner, intermediate, or advanced level.</p>
+        </div>
+      </div>
+
+      <div class="glass p-8 mt-10">
+        <h3 class="font-bold text-xl mb-4 text-center">What you get</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">Match Score</p><p class="text-xs mt-1" style="color:var(--text-muted)">Percentage fit against the job requirements</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">Curated Courses</p><p class="text-xs mt-1" style="color:var(--text-muted)">Free and paid course links for each skill gap</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">Salary Insights</p><p class="text-xs mt-1" style="color:var(--text-muted)">Entry, mid, and senior pay ranges for your role</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">Learning Roadmap</p><p class="text-xs mt-1" style="color:var(--text-muted)">Prioritised steps with time estimates</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">CV Tips</p><p class="text-xs mt-1" style="color:var(--text-muted)">Actionable advice to improve your CV for ATS</p></div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,.03)">
+            <i class="fas fa-check-circle mt-1" style="color:var(--green)"></i>
+            <div><p class="font-semibold text-sm">Alternative Roles</p><p class="text-xs mt-1" style="color:var(--text-muted)">Related jobs you may be a better fit for</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let latestAnalysisData = null;
+    let assessmentQuestions = [];
+    let loadingInterval = null;
+
+    const loadingMessages = [
+      "Parsing your CV...",
+      "Identifying your skills...",
+      "Analysing job requirements...",
+      "Calculating skill gaps...",
+      "Finding recommended courses...",
+      "Building learning roadmap...",
+      "Fetching salary insights...",
+      "Almost done..."
+    ];
+
+    const platformIcons = {
+      coursera: { icon: "fa-graduation-cap", color: "#0056D2", label: "Coursera" },
+      udemy: { icon: "fa-circle-play", color: "#A435F0", label: "Udemy" },
+      youtube: { icon: "fa-youtube", color: "#FF0000", label: "YouTube" },
+      "free code camp": { icon: "fa-code", color: "#0a0a23", label: "freeCodeCamp" },
+      freecodecamp: { icon: "fa-code", color: "#0a0a23", label: "freeCodeCamp" },
+      edx: { icon: "fa-school", color: "#02262B", label: "edX" },
+      linkedin: { icon: "fa-linkedin", color: "#0077B5", label: "LinkedIn Learning" },
+      pluralsight: { icon: "fa-play", color: "#F15B2A", label: "Pluralsight" },
+      datacamp: { icon: "fa-database", color: "#03EF62", label: "DataCamp" },
+      google: { icon: "fa-google", color: "#4285F4", label: "Google" },
+      microsoft: { icon: "fa-microsoft", color: "#00A4EF", label: "Microsoft" },
+      kaggle: { icon: "fa-chart-line", color: "#20BEFF", label: "Kaggle" },
+      default: { icon: "fa-link", color: "#2dd4bf", label: "Course" }
+    };
+
+    function getPlatformInfo(name, url) {
+      const text = (name + " " + url).toLowerCase();
+      for (const [key, val] of Object.entries(platformIcons)) {
+        if (key !== "default" && text.includes(key)) return val;
+      }
+      return platformIcons.default;
+    }
+
+    function byId(id) { return document.getElementById(id); }
+    function safe(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+    function showPg(name) {
+      document.querySelectorAll(".pg,.pg-center").forEach(p => p.classList.remove("on"));
+      const el = byId("pg-" + name);
+      if (el) el.classList.add("on");
+      document.querySelectorAll('.tab[id^="nt-"]').forEach(t => t.classList.remove("on"));
+      const tab = byId("nt-" + name);
+      if (tab) tab.classList.add("on");
+      window.scrollTo(0, 0);
+    }
+
+    function showResultTab(tabName) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      const panel = byId("tab-" + tabName);
+      if (panel) panel.classList.remove("hidden");
+      document.querySelectorAll(".result-tab").forEach(t => t.classList.remove("on"));
+      event.target.classList.add("on");
+    }
+
+    function goHome() { showPg("home"); }
+    function showErr(msg) { const el = byId("err"); el.textContent = msg; el.classList.remove("hidden"); }
+    function hideErr() { byId("err").classList.add("hidden"); byId("err").textContent = ""; }
+
+    async function readJsonSafe(response) {
+      const text = await response.text();
+      try { return JSON.parse(text || "{}"); }
+      catch (_) { return { error: text || "Invalid server response" }; }
+    }
+
+    function startLoading() {
+      let i = 0;
+      byId("ls").textContent = loadingMessages[0];
+      loadingInterval = setInterval(() => {
+        i = Math.min(i + 1, loadingMessages.length - 1);
+        byId("ls").textContent = loadingMessages[i];
+      }, 1800);
+    }
+    function stopLoading() { clearInterval(loadingInterval); loadingInterval = null; }
+
+    function fireConfetti() {
+      const colors = ["#2dd4bf","#3b82f6","#10b981","#8b5cf6","#f59e0b","#ef4444","#fff"];
+      for (let i = 0; i < 80; i++) {
+        setTimeout(() => {
+          const el = document.createElement("div");
+          el.className = "confetti-piece";
+          el.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 4000);
+        }, i * 30);
+      }
+    }
+
+    async function exportPDF() {
+      const el = byId("results-content");
+      if (!el) return;
+      const opt = {
+        margin: 10,
+        filename: `skillbridge-${(latestAnalysisData?.job_title || 'analysis').toLowerCase().replace(/\s+/g,'-')}.pdf`,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, backgroundColor: "#0a0c10" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      };
+      html2pdf().set(opt).from(el).save();
+    }
+
+    async function fetchJobUrl() {
+      const url = byId("job-url").value.trim();
+      if (!url) return showErr("Enter a job URL first.");
+      const btn = byId("fetch-job-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...';
+      hideErr();
+      try {
+        const res = await fetch("/api/fetch-job-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        byId("jd").value = data.description || "";
+        if (data.title && !byId("jt").value.trim()) byId("jt").value = data.title;
+      } catch (e) {
+        showErr(e.message || "Could not fetch that page. Paste the job description manually.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-cloud-arrow-down"></i> Fetch';
+      }
+    }
+
+    async function runAnalysis() {
+      const jobDescription = byId("jd").value.trim();
+      const jobTitle = byId("jt").value.trim();
+      const cvText = byId("cv-txt").value.trim();
+      const cvFile = byId("cf").files[0];
+      if (!jobDescription && !jobTitle) return showErr("Please enter a job title or job description.");
+      hideErr();
+      showPg("loading");
+      startLoading();
+      byId("ab").disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append("job_description", jobDescription);
+        fd.append("job_title", jobTitle);
+        if (cvFile) fd.append("cv_file", cvFile);
+        if (cvText) fd.append("cv_text", cvText);
+
+        const res = await fetch("/api/analyse", { method: "POST", body: fd });
+        const data = await readJsonSafe(res);
+        if (!res.ok || data.error) throw new Error(data.error || "Analyse failed");
+        latestAnalysisData = data;
+        renderResults(data);
+        byId("nt-results").style.display = "inline-flex";
+        byId("export-btn").classList.remove("hidden");
+        showPg("results");
+        if (Number(data.overall_match) >= 75) setTimeout(fireConfetti, 400);
+      } catch (e) {
+        showPg("home");
+        showErr("Error: " + e.message);
+      } finally {
+        stopLoading();
+        byId("ab").disabled = false;
+      }
+    }
+
+    function renderResults(data) {
+      const match = Number(data.overall_match || 0);
+      const readiness = Number(data.apply_readiness || match);
+      const strengths = Array.isArray(data.strengths) ? data.strengths : [];
+      const gaps = Array.isArray(data.gaps) ? data.gaps : [];
+      const courses = Array.isArray(data.recommended_courses) ? data.recommended_courses : [];
+      const roadmap = Array.isArray(data.roadmap) ? data.roadmap : [];
+      const cvAdvice = Array.isArray(data.cv_advice) ? data.cv_advice : [];
+      const altRoles = Array.isArray(data.alternative_roles) ? data.alternative_roles : [];
+      const salary = data.salary_insight || {};
+      const nextSteps = Array.isArray(data.next_steps) ? data.next_steps : [];
+      const careerAdvice = Array.isArray(data.career_advice) ? data.career_advice : [];
+      const ringColor = match >= 75 ? "var(--green)" : match >= 50 ? "var(--blue)" : "var(--red)";
+      const matchLabel = match >= 75 ? "Strong Match" : match >= 50 ? "Good Foundation" : "Needs Work";
+      const matchBdg = match >= 75 ? "bdg-green" : match >= 50 ? "bdg-blue" : "bdg-red";
+
+      // ── OVERVIEW ──────────────────────────────────────────────
+      byId("rc").innerHTML = `
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <h2 class="font-bold tracking-tight" style="font-size:2rem;letter-spacing:-1px">${safe(data.job_title || "Career Gap Analysis")}</h2>
+              <span class="bdg ${matchBdg}">${matchLabel}</span>
+            </div>
+            <p class="text-sm leading-relaxed" style="color:var(--text-muted);max-width:560px">${safe(data.summary || "")}</p>
+          </div>
+          <button class="btn btn-ghost flex-shrink-0" onclick="goHome()"><i class="fas fa-redo mr-2"></i>New</button>
+        </div>
+
+        <!-- Metrics row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div class="glass p-5 flex items-center gap-4 col-span-2 sm:col-span-1">
+            <div class="relative w-16 h-16 flex-shrink-0">
+              <svg class="ring-svg w-16 h-16">
+                <circle cx="32" cy="32" r="20" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"></circle>
+                <circle id="mr" class="ring-circle" cx="32" cy="32" r="20" fill="none" stroke="${ringColor}" stroke-width="4" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center"><span class="font-bold text-sm">${match}%</span></div>
+            </div>
+            <div><p class="font-bold text-2xl">${match}%</p><p class="text-xs" style="color:var(--text-muted)">Job Match</p></div>
+          </div>
+          <div class="glass p-5">
+            <p class="font-bold text-3xl" style="color:var(--green)">${strengths.length}</p>
+            <p class="text-xs mt-1" style="color:var(--text-muted)">Strengths</p>
+          </div>
+          <div class="glass p-5">
+            <p class="font-bold text-3xl" style="color:var(--red)">${gaps.length}</p>
+            <p class="text-xs mt-1" style="color:var(--text-muted)">Skill Gaps</p>
+          </div>
+          <div class="glass p-5">
+            <p class="font-bold text-3xl" style="color:var(--blue)">${courses.length}</p>
+            <p class="text-xs mt-1" style="color:var(--text-muted)">Courses Found</p>
+          </div>
+        </div>
+
+        <!-- Apply readiness bar -->
+        <div class="glass p-5 mb-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-semibold text-sm">Apply Readiness</span>
+            <span class="font-bold" style="color:var(--teal)">${readiness}%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill readiness-glow" data-w="${readiness}%" style="background:linear-gradient(90deg,var(--teal),var(--green))"></div></div>
+          <p class="text-xs mt-2" style="color:var(--text-muted)">
+            ${readiness >= 80 ? "You're ready to apply now. Tailor your CV and start reaching out." :
+              readiness >= 60 ? "Close to ready. Address key gaps and you'll be competitive." :
+              "Focus on the roadmap first before applying broadly."}
+          </p>
+        </div>
+
+        <!-- Strengths & Gaps -->
+        <div class="grid lg:grid-cols-2 gap-4 mb-5">
+          <div class="glass p-6">
+            <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-star" style="color:var(--amber)"></i>Your Strengths</h3>
+            <div class="space-y-4">
+              ${strengths.map(s => `
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold">${safe(s.skill)}</span>
+                    <span class="text-sm font-bold" style="color:var(--teal)">${Number(s.level || 0)}%</span>
+                  </div>
+                  <div class="bar-track"><div class="bar-fill" data-w="${Number(s.level || 0)}%"></div></div>
+                  ${s.note ? `<p class="text-xs mt-1" style="color:var(--text-muted)">${safe(s.note)}</p>` : ""}
+                </div>`).join("") || '<p class="text-sm" style="color:var(--text-muted)">No strengths found.</p>'}
+            </div>
+          </div>
+
+          <div class="glass p-6">
+            <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-triangle-exclamation" style="color:var(--red)"></i>Skill Gaps</h3>
+            <div class="space-y-3">
+              ${gaps.map(g => {
+                const impColor = g.importance === "critical" ? "var(--red)" : g.importance === "important" ? "var(--amber)" : "var(--text-muted)";
+                const impBdg = g.importance === "critical" ? "bdg-red" : g.importance === "important" ? "bdg-amber" : "bdg-teal";
+                return `
+                <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+                  <div class="flex items-center justify-between gap-2 mb-1">
+                    <p class="text-sm font-semibold">${safe(g.skill)}</p>
+                    ${g.importance ? `<span class="bdg ${impBdg}">${safe(g.importance)}</span>` : ""}
+                  </div>
+                  ${g.note ? `<p class="text-xs" style="color:var(--text-muted)">${safe(g.note)}</p>` : ""}
+                </div>`;
+              }).join("") || '<p class="text-sm" style="color:var(--green)">No major gaps detected.</p>'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick next steps -->
+        ${nextSteps.length ? `
+        <div class="glass p-6 mb-5">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-rocket" style="color:var(--teal)"></i>This Week's Actions</h3>
+          <div class="grid sm:grid-cols-3 gap-3">
+            ${nextSteps.slice(0,3).map((s,i) => `
+              <div class="p-4 rounded-xl flex items-start gap-3" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+                <span class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style="background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff">${i+1}</span>
+                <p class="text-sm">${safe(s)}</p>
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
+
+        <!-- Career advice -->
+        ${careerAdvice.length ? `
+        <div class="glass p-6">
+          <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-lightbulb" style="color:var(--amber)"></i>Career Advice</h3>
+          <div class="space-y-2">
+            ${careerAdvice.map(a => `
+              <div class="flex items-start gap-3 p-3 rounded-xl" style="background:rgba(255,255,255,0.02)">
+                <i class="fas fa-arrow-right mt-1 flex-shrink-0" style="color:var(--teal);font-size:11px"></i>
+                <p class="text-sm">${safe(a)}</p>
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
+      `;
+
+      // ── COURSES ───────────────────────────────────────────────
+      byId("courses-container").innerHTML = courses.length ? `
+        <div class="mb-6">
+          <h2 class="font-bold text-2xl mb-2">Recommended Courses</h2>
+          <p class="text-sm mb-6" style="color:var(--text-muted)">Curated based on your skill gaps. Click any card to open the course.</p>
+          <div class="space-y-3">
+            ${courses.map(c => {
+              const platform = getPlatformInfo(c.platform || c.name || "", c.url || "");
+              const isFree = c.free === true || String(c.free).toLowerCase() === "true";
+              return `
+              <a href="${safe(c.url || "#")}" target="_blank" rel="noopener noreferrer" class="course-card block">
+                <div class="course-icon flex-shrink-0" style="background:${platform.color}22">
+                  <i class="fas ${platform.icon}" style="color:${platform.color};font-size:16px"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-semibold text-sm">${safe(c.name || c.title || "Course")}</p>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      ${isFree ? '<span class="bdg bdg-green">Free</span>' : '<span class="bdg bdg-blue">Paid</span>'}
+                      <i class="fas fa-external-link-alt" style="color:var(--text-muted);font-size:10px"></i>
+                    </div>
+                  </div>
+                  <p class="text-xs mt-1" style="color:var(--teal)">${safe(c.platform || platform.label)}</p>
+                  ${c.skill ? `<span class="bdg bdg-purple mt-2" style="font-size:9px">${safe(c.skill)}</span>` : ""}
+                  ${c.note ? `<p class="text-xs mt-2" style="color:var(--text-muted)">${safe(c.note)}</p>` : ""}
+                </div>
+              </a>`;
+            }).join("")}
+          </div>
+        </div>` : `
+        <div class="glass p-10 text-center">
+          <i class="fas fa-graduation-cap text-4xl mb-4" style="color:var(--text-muted)"></i>
+          <p class="font-semibold mb-2">No courses returned</p>
+          <p class="text-sm" style="color:var(--text-muted)">Try running the analysis again with a more detailed job description.</p>
+        </div>`;
+
+      // ── ROADMAP ───────────────────────────────────────────────
+      byId("roadmap-container").innerHTML = `
+        <h2 class="font-bold text-2xl mb-2">Learning Roadmap</h2>
+        <p class="text-sm mb-6" style="color:var(--text-muted)">Your personalised step-by-step plan to close the skill gap.</p>
+        <div class="space-y-4">
+          ${roadmap.map((s, i) => `
+            <div class="timeline-item">
+              <div class="timeline-dot">${i+1}</div>
+              <div class="glass p-5">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <p class="font-bold">${safe(s.title || "Step")}</p>
+                  ${s.duration ? `<span class="bdg bdg-teal flex-shrink-0">${safe(s.duration)}</span>` : ""}
+                </div>
+                ${s.why ? `<p class="text-sm mb-3" style="color:var(--text-muted)">${safe(s.why)}</p>` : ""}
+                ${Array.isArray(s.resources) && s.resources.length ? `
+                  <div class="space-y-2 mt-3">
+                    ${s.resources.map(r => {
+                      const pl = getPlatformInfo(r.name || "", r.url || "");
+                      return `
+                      <a href="${safe(r.url || "#")}" target="_blank" rel="noopener noreferrer"
+                         class="flex items-center gap-3 p-3 rounded-xl transition-all"
+                         style="background:rgba(255,255,255,0.03);border:1px solid var(--border);text-decoration:none"
+                         onmouseover="this.style.borderColor='var(--border-teal)'" onmouseout="this.style.borderColor='var(--border)'">
+                        <i class="fas ${pl.icon} flex-shrink-0" style="color:${pl.color};font-size:14px;width:16px;text-align:center"></i>
+                        <span class="text-sm font-medium flex-1">${safe(r.name || "Resource")}</span>
+                        ${r.free ? '<span class="bdg bdg-green" style="font-size:9px">Free</span>' : '<span class="bdg bdg-blue" style="font-size:9px">Paid</span>'}
+                        <i class="fas fa-external-link-alt" style="color:var(--text-muted);font-size:10px"></i>
+                      </a>`;
+                    }).join("")}
+                  </div>` : ""}
+              </div>
+            </div>`).join("") || '<p class="text-sm" style="color:var(--text-muted)">No roadmap returned.</p>'}
+        </div>`;
+
+      // ── SALARY ────────────────────────────────────────────────
+      byId("salary-container").innerHTML = `
+        <h2 class="font-bold text-2xl mb-2">Salary Insights</h2>
+        <p class="text-sm mb-6" style="color:var(--text-muted)">Estimated compensation ranges for ${safe(data.job_title || "this role")}.</p>
+        ${salary.range ? `
+        <div class="glass p-8 mb-5 text-center">
+          <p class="text-xs uppercase tracking-widest mb-3" style="color:var(--text-muted)">Typical Range</p>
+          <p class="font-extrabold grad-text" style="font-size:2.5rem;letter-spacing:-1px">${safe(salary.range)}</p>
+          ${salary.note ? `<p class="text-sm mt-3" style="color:var(--text-muted)">${safe(salary.note)}</p>` : ""}
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4 mb-5">
+          <div class="glass p-6 text-center">
+            <p class="text-xs uppercase tracking-widest mb-2" style="color:var(--text-muted)">Entry Level</p>
+            <p class="font-bold text-2xl" style="color:var(--blue)">${safe(salary.entry || "—")}</p>
+          </div>
+          <div class="glass p-6 text-center">
+            <p class="text-xs uppercase tracking-widest mb-2" style="color:var(--text-muted)">Senior Level</p>
+            <p class="font-bold text-2xl" style="color:var(--green)">${safe(salary.senior || "—")}</p>
+          </div>
+        </div>` : `
+        <div class="glass p-8 text-center">
+          <i class="fas fa-sack-dollar text-4xl mb-4" style="color:var(--text-muted)"></i>
+          <p style="color:var(--text-muted)">Salary data not available for this analysis.</p>
+        </div>`}
+        <div class="glass p-5" style="border:1px solid rgba(245,158,11,.2);background:var(--amber-dim)">
+          <p class="text-xs" style="color:var(--amber)"><i class="fas fa-circle-info mr-2"></i>Salary figures are AI estimates based on industry data and may vary by location, company size, and experience. Always verify on Glassdoor, Levels.fyi, or LinkedIn Salary.</p>
+        </div>`;
+
+      // ── CV TIPS ───────────────────────────────────────────────
+      byId("cvtips-container").innerHTML = `
+        <h2 class="font-bold text-2xl mb-2">CV Improvement Tips</h2>
+        <p class="text-sm mb-6" style="color:var(--text-muted)">Actionable advice to make your CV stand out for this role.</p>
+        <div class="space-y-3">
+          ${(data.cv_advice || []).map((tip, i) => `
+            <div class="glass p-5 flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff">${i+1}</div>
+              <p class="text-sm leading-relaxed mt-1">${safe(tip)}</p>
+            </div>`).join("") || '<p style="color:var(--text-muted)">No CV tips returned.</p>'}
+        </div>`;
+
+      // ── ALTERNATIVE ROLES ─────────────────────────────────────
+      byId("alt-container").innerHTML = `
+        <h2 class="font-bold text-2xl mb-2">Alternative Roles</h2>
+        <p class="text-sm mb-6" style="color:var(--text-muted)">Other roles where your current skills may be a stronger fit.</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${altRoles.map(r => {
+            const m = Number(r.match || 0);
+            const col = m >= 75 ? "var(--green)" : m >= 50 ? "var(--blue)" : "var(--amber)";
+            return `
+            <div class="glass p-5">
+              <div class="flex items-start justify-between gap-2 mb-3">
+                <p class="font-bold">${safe(r.title)}</p>
+                <span class="font-extrabold text-lg" style="color:${col}">${m}%</span>
+              </div>
+              <div class="bar-track mb-3"><div class="bar-fill" data-w="${m}%" style="background:${col}"></div></div>
+              ${r.reason ? `<p class="text-xs" style="color:var(--text-muted)">${safe(r.reason)}</p>` : ""}
+            </div>`;
+          }).join("") || '<p style="color:var(--text-muted)">No alternative roles suggested.</p>'}
+        </div>`;
+
+      setTimeout(() => {
+        document.querySelectorAll(".bar-fill[data-w]").forEach(b => b.style.width = b.getAttribute("data-w"));
+        const ring = byId("mr");
+        if (ring) ring.style.strokeDashoffset = String(251 - (251 * match / 100));
+      }, 250);
+
+      resetAssessmentUI();
+    }
+
+    function resetAssessmentUI() {
+      assessmentQuestions = [];
+      byId("assessment-start-wrap").classList.remove("hidden");
+      byId("assessment-loading").classList.add("hidden");
+      byId("assessment-error").classList.add("hidden");
+      byId("assessment-error").textContent = "";
+      if (byId("assessment-timer-wrap")) byId("assessment-timer-wrap").classList.add("hidden");
+      if (byId("assessment-timer")) byId("assessment-timer").textContent = "Timer 00:00";
+      byId("assessment-questions").innerHTML = "";
+      byId("assessment-submit-btn").classList.add("hidden");
+      byId("assessment-score").classList.add("hidden");
+      byId("assessment-start-btn").disabled = false;
+    }
+
+    function setAssessmentError(message) {
+      const el = byId("assessment-error");
+      el.textContent = message;
+      el.classList.remove("hidden");
+    }
+
+    function renderAssessmentQuestions(questions) {
+      byId("assessment-questions").innerHTML = questions.map((q, i) => `
+        <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+          <p class="font-semibold mb-3 text-sm">${i + 1}. ${safe(q.question || q.text || "")}</p>
+          ${q.skill ? `<span class="bdg bdg-purple mb-3 inline-block" style="font-size:9px">${safe(q.skill)}</span>` : ""}
+          <div class="space-y-2 mt-2">
+            ${(Array.isArray(q.options) ? q.options : []).map(opt => `
+              <label class="assessment-option cursor-pointer">
+                <input type="radio" name="assessment-q-${i}" value="${safe(opt)}" />
+                <span class="text-sm">${safe(opt)}</span>
+              </label>`).join("")}
+          </div>
+        </div>`).join("");
+      byId("assessment-submit-btn").classList.remove("hidden");
+    }
+
+    async function startAssessment() {
+      byId("assessment-error").classList.add("hidden");
+      byId("assessment-score").classList.add("hidden");
+      byId("assessment-questions").innerHTML = "";
+      byId("assessment-submit-btn").classList.add("hidden");
+      byId("assessment-loading").classList.remove("hidden");
+      byId("assessment-start-btn").disabled = true;
+      try {
+        const role = (latestAnalysisData && latestAnalysisData.job_title) || byId("jt").value.trim() || "Data Analyst";
+        const res = await fetch("/api/assessment/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role })
+        });
+        const data = await readJsonSafe(res);
+        if (!res.ok || data.error) throw new Error(data.error || "Could not start assessment.");
+        assessmentQuestions = Array.isArray(data.questions) ? data.questions : [];
+        if (!assessmentQuestions.length) throw new Error("No assessment questions were returned.");
+        byId("assessment-loading").classList.add("hidden");
+        byId("assessment-start-wrap").classList.add("hidden");
+        renderAssessmentQuestions(assessmentQuestions);
+      } catch (e) {
+        byId("assessment-loading").classList.add("hidden");
+        byId("assessment-start-btn").disabled = false;
+        setAssessmentError(e.message || "Failed to start assessment.");
+      }
+    }
+
+    async function submitAssessment() {
+      if (!assessmentQuestions.length) return setAssessmentError("Start assessment first.");
+      byId("assessment-error").classList.add("hidden");
+      const answers = assessmentQuestions.map((q, i) => {
+        const selected = document.querySelector(`input[name="assessment-q-${i}"]:checked`);
+        return { selected: selected ? selected.value : "", correct: q.correct || "", skill: q.skill || "", question: q.question || "" };
+      });
+      if (answers.some(a => !a.selected)) return setAssessmentError("Please answer all questions before submitting.");
+      byId("assessment-submit-btn").disabled = true;
+      try {
+        const res = await fetch("/api/assessment/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers })
+        });
+        const result = await readJsonSafe(res);
+        if (!res.ok || result.error) throw new Error(result.error || "Could not evaluate assessment.");
+        const score = Number(result.score || 0);
+        byId("assessment-score-value").textContent = score + "%";
+        byId("assessment-score").classList.remove("hidden");
+        if (score >= 80) { byId("assessment-score").style.background = "var(--green-dim)"; byId("assessment-score").style.color = "var(--green)"; }
+        else if (score >= 60) { byId("assessment-score").style.background = "var(--blue-dim)"; byId("assessment-score").style.color = "var(--blue)"; }
+        else { byId("assessment-score").style.background = "var(--red-dim)"; byId("assessment-score").style.color = "var(--red)"; }
+        if (result.feedback) {
+          byId("assessment-feedback").textContent = result.feedback;
+          byId("assessment-feedback").classList.remove("hidden");
+        }
+      } catch (e) {
+        setAssessmentError(e.message || "Failed to submit assessment.");
+      } finally {
+        byId("assessment-submit-btn").disabled = false;
+      }
+    }
+
+    // Role selectors
+    const roleCatalog = {
+      Tech: ["Software Engineer","Data Analyst","Data Scientist","Machine Learning Engineer","Frontend Developer","Backend Developer","DevOps Engineer","Cybersecurity Analyst","Cloud Engineer","AI Engineer"],
+      "Non-Tech": ["Business Analyst","Marketing Manager","Sales Executive","HR Manager","Product Manager","Operations Manager","Financial Analyst","Accountant","Customer Success Manager","Project Manager"]
+    };
+
+    function updateRoleOptions() {
+      const categoryEl = byId("role-category");
+      const roleEl = byId("role-select");
+      if (!categoryEl || !roleEl) return;
+      const roles = (roleCatalog[categoryEl.value] || []).concat(["Other (Enter manually)"]);
+      const current = roleEl.value;
+      roleEl.innerHTML = roles.map(r => `<option value="${r}">${r}</option>`).join("");
+      roleEl.value = roles.includes(current) ? current : roles[0];
+      handleRoleSelection();
+    }
+
+    function handleRoleSelection() {
+      const selectedRole = byId("role-select") ? byId("role-select").value : "";
+      const customWrap = byId("custom-role-wrap");
+      if (customWrap) customWrap.classList.toggle("hidden", selectedRole !== "Other (Enter manually)");
+      const finalRole = selectedRole === "Other (Enter manually)" ? (byId("custom-role") ? byId("custom-role").value.trim() : "") : selectedRole;
+      if (finalRole && byId("jt") && !byId("jt").value.trim()) byId("jt").value = finalRole;
+    }
+
+    function setAssessmentDifficulty(level) {
+      ["beginner","intermediate","advanced"].forEach(item => {
+        const el = byId("assessment-diff-" + item);
+        if (el) el.classList.toggle("on", item === level);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => { updateRoleOptions(); });
+  </script>
+  <script src="skillbridge.js"></script>
+</body>
+</html>

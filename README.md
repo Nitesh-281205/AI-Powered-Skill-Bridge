@@ -7,7 +7,7 @@ The current project includes:
 - mandatory user registration and sign-in
 - persistent SQLite-backed user data
 - admin tracking dashboard
-- CV and job-description analysis powered by Groq + Llama 3.3 70B
+- CV and job-description analysis powered by Groq (GPT-OSS 120B, with Qwen3.6 27B fallback)
 - role-based skill assessment with answer review
 - adaptive roadmap generation
 - AI mock interview with feedback
@@ -77,7 +77,7 @@ skillbridge-ai-main/
 
 - **Backend:** Flask, Flask-CORS
 - **Frontend:** HTML, Tailwind CSS, Vanilla JavaScript
-- **AI Model:** Llama 3.3 70B via Groq
+- **AI Model:** GPT-OSS 120B via Groq (auto-falls back to Qwen3.6 27B)
 - **Database:** SQLite
 - **Auth:** Flask session cookies + Werkzeug password hashing
 - **PDF Parsing:** PyMuPDF
@@ -111,7 +111,8 @@ Create a `.env` file in the project root:
 
 ```env
 GROQ_API_KEY=your_groq_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
+GROQ_FALLBACK_MODEL=qwen/qwen3.6-27b
 FLASK_SECRET_KEY=replace_with_a_long_random_secret
 ```
 
@@ -258,5 +259,6 @@ Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force
 - role-based analytics charts in admin dashboard
 
 ## Author
+Nitesh B
 
 Built for the SkillBridge AI project.

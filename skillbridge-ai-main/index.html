@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillBridge | Career Gap Analyser</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0a0c10;
+      --bg-card: rgba(23, 28, 38, 0.72);
+      --bg-card-solid: #111827;
+      --teal: #2dd4bf;
+      --blue: #3b82f6;
+      --teal-dim: rgba(45, 212, 191, 0.1);
+      --blue-dim: rgba(59, 130, 246, 0.1);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.1);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.1);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-teal: rgba(45, 212, 191, 0.25);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .glow-1 { position: fixed; width: 620px; height: 620px; top: -220px; right: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(45,212,191,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .glow-2 { position: fixed; width: 520px; height: 520px; bottom: -180px; left: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+    .z { position: relative; z-index: 1; }
+    .glass {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .pg { display: none; }
+    .pg.on { display: block; animation: fadeUp .35s ease-out; }
+    .pg-center { display: none; }
+    .pg-center.on { display: flex; animation: fadeUp .35s ease-out; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .grad-text {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,12,16,.9);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 600;
+      transition: .2s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      color: #fff;
+      padding: 14px 20px;
+      box-shadow: 0 4px 24px rgba(45,212,191,.2);
+    }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 10px 16px;
+    }
+    .tab {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: .2s;
+    }
+    .tab.on { background: var(--teal-dim); color: var(--teal); }
+    .lbl {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .inp {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 14px;
+      padding: 13px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .inp:focus { border-color: rgba(45,212,191,.5); box-shadow: 0 0 0 3px rgba(45,212,191,.08); }
+    .inp::placeholder { color: var(--text-dim); }
+
+select.inp {
+  color: var(--text);
+}
+
+select.inp option {
+  background: #111827;
+  color: #ffffff;
+}
+
+select.inp option:hover {
+  background: #1f2937;
+}
+    .bar-track { background: rgba(255,255,255,.07); border-radius: 999px; height: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--teal), var(--blue)); transition: width 1s cubic-bezier(0.22,1,0.36,1); }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-circle { stroke-dasharray: 251; stroke-dashoffset: 251; transition: stroke-dashoffset 1.3s cubic-bezier(0.22,1,0.36,1); }
+    .assessment-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      transition: border-color .2s, background .2s;
+    }
+    .assessment-option:hover { border-color: var(--border-teal); background: var(--teal-dim); }
+    .assessment-option input { margin-top: 2px; accent-color: var(--teal); }
+    .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(45,212,191,.2); border-top-color: var(--teal); animation: spin .7s linear infinite; }
+    .bdg { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .bdg-teal { background: var(--teal-dim); color: var(--teal); }
+    .bdg-blue { background: var(--blue-dim); color: var(--blue); }
+    .bdg-green { background: var(--green-dim); color: var(--green); }
+    .bdg-red { background: var(--red-dim); color: var(--red); }
+    .sec-h { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+    .sec-ic { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+
+  <nav class="nav z">
+    <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--teal),var(--blue))">
+          <i class="fas fa-bolt text-white text-sm"></i>
+        </div>
+        <span class="font-extrabold text-lg tracking-tight">Skill<span class="grad-text">Bridge</span></span>
+      </div>
+      <div class="hidden md:flex items-center gap-1">
+        <button class="tab on" id="nt-home" onclick="goHome()">Analyse</button>
+        <button class="tab" id="nt-results" onclick="showPg('results')" style="display:none">Results</button>
+        <button class="tab" id="nt-how" onclick="showPg('how')">How it works</button>
+      </div>
+    </div>
+  </nav>
+
+  <section id="pg-home" class="pg on z">
+    <div class="max-w-6xl mx-auto px-5 py-14">
+      <div class="text-center mb-14" style="max-width:680px;margin-left:auto;margin-right:auto">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:var(--teal-dim);border:1px solid var(--border-teal)">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:var(--teal);animation:pulse 2s infinite"></span>
+          <span class="text-xs font-semibold tracking-wide" style="color:var(--teal)">Any industry � Any role � Instant AI analysis</span>
+        </div>
+        <h1 class="font-extrabold mb-5" style="font-size:clamp(2.2rem,5vw,3.5rem);letter-spacing:-1.3px;line-height:1.1">
+          Know exactly what's standing between you and your <span class="grad-text">dream job</span>
+        </h1>
+        <p class="text-base leading-relaxed" style="color:var(--text-muted)">
+          Upload your CV and paste any job description. Get an honest skill gap analysis, roadmap, and role-based AI assessment.
+        </p>
+      </div>
+
+      <div class="glass p-8 max-w-3xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="lbl">Job title</label>
+            <input id="jt" class="inp" placeholder="e.g. Data Analyst, Product Manager..." />
+          </div>
+          <div>
+            <label class="lbl">Upload CV</label>
+            <input id="cf" type="file" accept=".pdf,.doc,.docx,.txt" class="inp" />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="lbl">Or paste CV text</label>
+          <textarea id="cv-txt" rows="6" class="inp" placeholder="Paste your full CV here..."></textarea>
+        </div>
+        <div class="mb-4">
+          <label class="lbl">Job URL</label>
+          <div class="flex gap-2">
+            <input id="job-url" class="inp" placeholder="https://company.com/careers/job-posting" />
+            <button id="fetch-job-btn" class="btn btn-ghost flex-shrink-0" onclick="fetchJobUrl()">
+              <i class="fas fa-cloud-arrow-down"></i> Fetch Job
+            </button>
+          </div>
+        </div>
+        <div class="glass p-4 mb-4" style="background:rgba(255,255,255,.03)">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="lbl">Role category</label>
+              <select id="role-category" class="inp" onchange="updateRoleOptions()">
+                <option value="Tech">Tech</option>
+                <option value="Non-Tech">Non-Tech</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">Target role</label>
+              <select id="role-select" class="inp" onchange="handleRoleSelection()"></select>
+            </div>
+          </div>
+          <div id="custom-role-wrap" class="hidden mt-4">
+            <label class="lbl">Custom role</label>
+            <input id="custom-role" class="inp" placeholder="Enter your target role manually" oninput="handleRoleSelection()" />
+          </div>
+        </div>
+        <div class="mb-6">
+          <label class="lbl">Job description</label>
+          <textarea id="jd" rows="6" class="inp" placeholder="Paste full job description for best analysis..."></textarea>
+        </div>
+        <button id="ab" class="btn btn-primary w-full text-base" onclick="runAnalysis()">
+          <i class="fas fa-bolt"></i> Analyse My Career Gap
+        </button>
+        <div id="err" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pg-loading" class="pg-center z min-h-screen items-center justify-center px-4">
+    <div class="text-center max-w-md">
+      <div class="w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-6" style="background:linear-gradient(135deg,var(--teal),var(--blue));animation:pulse 2s infinite">
+        <i class="fas fa-bolt text-white text-4xl"></i>
+      </div>
+      <h2 class="font-bold text-3xl mb-2 tracking-tight">Analysing your profile</h2>
+      <p class="mb-8" style="color:var(--text-muted)">This takes about 15-20 seconds...</p>
+      <div class="glass p-4 text-left" style="max-width:360px;margin:0 auto">
+        <div class="flex items-center gap-3">
+          <div class="spinner flex-shrink-0"></div>
+          <span class="text-sm font-medium" id="ls">Parsing your CV...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pg-results" class="pg z">
+    <div class="max-w-6xl mx-auto px-5 py-10">
+      <div id="rc"></div>
+
+      <div id="assessment-panel" class="mt-8">
+        <div class="glass p-6 max-w-3xl mx-auto">
+          <h3 class="text-xl font-bold mb-2"><i class="fas fa-brain mr-2"></i>AI Skill Assessment</h3>
+          <p class="text-sm mb-5" style="color:var(--text-muted)">Take a short quiz based on the selected role.</p>
+
+          <div class="flex gap-1 p-1 rounded-xl mb-4" style="background:rgba(255,255,255,0.04)">
+            <button id="assessment-diff-beginner" class="tab flex-1" onclick="setAssessmentDifficulty('beginner')">Beginner</button>
+            <button id="assessment-diff-intermediate" class="tab on flex-1" onclick="setAssessmentDifficulty('intermediate')">Intermediate</button>
+            <button id="assessment-diff-advanced" class="tab flex-1" onclick="setAssessmentDifficulty('advanced')">Advanced</button>
+          </div>
+
+          <div id="assessment-start-wrap">
+            <button id="assessment-start-btn" class="btn btn-primary w-full" onclick="startAssessment()">
+              <i class="fas fa-play"></i> Start AI Assessment
+            </button>
+          </div>
+
+          <div id="assessment-loading" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.25)">
+            <i class="fas fa-spinner fa-spin mr-2"></i>Generating assessment questions...
+          </div>
+
+          <div id="assessment-error" class="hidden mt-4 p-3 rounded-xl text-sm" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)"></div>
+          <div id="assessment-timer-wrap" class="hidden mt-4">
+            <span id="assessment-timer" class="bdg bdg-teal">Timer 00:00</span>
+          </div>
+          <div id="assessment-questions" class="space-y-5 mt-5"></div>
+
+          <button id="assessment-submit-btn" class="btn btn-primary mt-6 w-full hidden" onclick="submitAssessment()">
+            <i class="fas fa-paper-plane"></i> Submit Assessment
+          </button>
+
+          <div id="assessment-score" class="hidden mt-5 p-4 rounded-xl" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.25)">
+            <p class="text-sm font-semibold uppercase tracking-wide text-center">Assessment Score</p>
+            <p id="assessment-score-value" class="text-3xl font-extrabold mt-1 text-center">0%</p>
+            <p id="assessment-feedback" class="hidden text-sm mt-3 text-center" style="color:var(--text)"></p>
+            <div id="assessment-weak-skills" class="hidden mt-4"></div>
+            <div id="assessment-skill-scores" class="hidden mt-4 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pg-how" class="pg z">
+    <div class="max-w-4xl mx-auto px-5 py-20">
+      <div class="text-center mb-12">
+        <h2 class="font-bold text-4xl mb-3 tracking-tight">How <span class="grad-text">SkillBridge</span> works</h2>
+        <p style="color:var(--text-muted)">Three steps to understand exactly where you stand</p>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-5">
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">??</div>
+          <h3 class="font-bold text-lg mb-2">Upload your CV</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Upload PDF/Word or paste CV text.</p>
+        </div>
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">??</div>
+          <h3 class="font-bold text-lg mb-2">Paste the job</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Add job title and description.</p>
+        </div>
+        <div class="glass p-7 text-center">
+          <div class="text-4xl mb-4">??</div>
+          <h3 class="font-bold text-lg mb-2">Get roadmap + quiz</h3>
+          <p class="text-sm" style="color:var(--text-muted)">Get gaps, roadmap, and assessment score.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let latestAnalysisData = null;
+    let assessmentQuestions = [];
+    let loadingInterval = null;
+
+    const loadingMessages = [
+      "Parsing your CV...",
+      "Identifying your skills...",
+      "Analysing job requirements...",
+      "Calculating skill gaps...",
+      "Building learning roadmap...",
+      "Almost done..."
+    ];
+
+    function byId(id) { return document.getElementById(id); }
+    function safe(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+    function showPg(name) {
+      document.querySelectorAll(".pg,.pg-center").forEach(p => p.classList.remove("on"));
+      const el = byId("pg-" + name);
+      if (el) el.classList.add("on");
+      document.querySelectorAll('.tab[id^="nt-"]').forEach(t => t.classList.remove("on"));
+      const tab = byId("nt-" + name);
+      if (tab) tab.classList.add("on");
+      window.scrollTo(0, 0);
+    }
+    function goHome() { showPg("home"); }
+    function showErr(msg) { const el = byId("err"); el.textContent = msg; el.classList.remove("hidden"); }
+    function hideErr() { byId("err").classList.add("hidden"); byId("err").textContent = ""; }
+    async function readJsonSafe(response) {
+      const text = await response.text();
+      try { return JSON.parse(text || "{}"); }
+      catch (_) { return { error: text || "Invalid server response" }; }
+    }
+    function startLoading() {
+      let i = 0;
+      byId("ls").textContent = loadingMessages[0];
+      loadingInterval = setInterval(() => {
+        i = Math.min(i + 1, loadingMessages.length - 1);
+        byId("ls").textContent = loadingMessages[i];
+      }, 1700);
+    }
+    function stopLoading() { clearInterval(loadingInterval); loadingInterval = null; }
+
+    async function runAnalysis() {
+      const jobDescription = byId("jd").value.trim();
+      const jobTitle = byId("jt").value.trim();
+      const cvText = byId("cv-txt").value.trim();
+      const cvFile = byId("cf").files[0];
+      if (!jobDescription && !jobTitle) return showErr("Please enter a job title or job description.");
+
+      hideErr();
+      showPg("loading");
+      startLoading();
+      byId("ab").disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append("job_description", jobDescription);
+        fd.append("job_title", jobTitle);
+        if (cvFile) fd.append("cv_file", cvFile);
+        if (cvText) fd.append("cv_text", cvText);
+
+        const res = await fetch("/api/analyse", { method: "POST", body: fd });
+        const data = await readJsonSafe(res);
+        if (!res.ok || data.error) throw new Error(data.error || "Analyse failed");
+        latestAnalysisData = data;
+        renderResults(data);
+        byId("nt-results").style.display = "inline-flex";
+        showPg("results");
+      } catch (e) {
+        showPg("home");
+        showErr("Error: " + e.message);
+      } finally {
+        stopLoading();
+        byId("ab").disabled = false;
+      }
+    }
+
+    function renderResults(data) {
+      const match = Number(data.overall_match || 0);
+      const strengths = Array.isArray(data.strengths) ? data.strengths : [];
+      const gaps = Array.isArray(data.gaps) ? data.gaps : [];
+      const roadmap = Array.isArray(data.roadmap) ? data.roadmap : [];
+      const ringColor = match >= 75 ? "var(--green)" : match >= 50 ? "var(--blue)" : "var(--red)";
+      const ringCirc = 251;
+
+      byId("rc").innerHTML = `
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 class="font-bold tracking-tight" style="font-size:2rem;letter-spacing:-1px">${safe(data.job_title || "Career Gap Analysis")}</h2>
+            <p class="mt-2 text-sm leading-relaxed" style="color:var(--text-muted)">${safe(data.summary || "")}</p>
+          </div>
+          <button class="btn btn-ghost" onclick="goHome()"><i class="fas fa-redo mr-2"></i>New Analysis</button>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div class="glass p-5 flex items-center gap-4 col-span-2 sm:col-span-1">
+            <div class="relative w-16 h-16 flex-shrink-0">
+              <svg class="ring-svg w-16 h-16">
+                <circle cx="32" cy="32" r="20" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"></circle>
+                <circle id="mr" class="ring-circle" cx="32" cy="32" r="20" fill="none" stroke="${ringColor}" stroke-width="4" stroke-linecap="round"></circle>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center"><span class="font-bold text-sm">${match}%</span></div>
+            </div>
+            <div><p class="font-bold text-2xl">${match}%</p><p class="text-xs" style="color:var(--text-muted)">Overall Match</p></div>
+          </div>
+          <div class="glass p-5"><p class="font-bold text-3xl">${strengths.length}</p><p class="text-xs mt-1" style="color:var(--text-muted)">Strengths</p></div>
+          <div class="glass p-5"><p class="font-bold text-3xl">${gaps.length}</p><p class="text-xs mt-1" style="color:var(--text-muted)">Gaps</p></div>
+          <div class="glass p-5"><p class="font-bold text-3xl">${roadmap.length}</p><p class="text-xs mt-1" style="color:var(--text-muted)">Roadmap steps</p></div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4 mb-5">
+          <div class="glass p-6">
+            <h3 class="font-bold mb-4">Your Strengths</h3>
+            <div class="space-y-4">
+              ${strengths.map(s => `
+                <div>
+                  <div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold">${safe(s.skill)}</span><span class="text-sm font-bold" style="color:var(--teal)">${Number(s.level || 0)}%</span></div>
+                  <div class="bar-track"><div class="bar-fill" data-w="${Number(s.level || 0)}%"></div></div>
+                </div>`).join("") || '<p class="text-sm" style="color:var(--text-muted)">No strengths found.</p>'}
+            </div>
+          </div>
+
+          <div class="glass p-6">
+            <h3 class="font-bold mb-4">Skill Gaps</h3>
+            <div class="space-y-3">
+              ${gaps.map(g => `
+                <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+                  <p class="text-sm font-semibold">${safe(g.skill)}</p>
+                  ${g.note ? `<p class="text-xs mt-1" style="color:var(--text-muted)">${safe(g.note)}</p>` : ""}
+                </div>`).join("") || '<p class="text-sm" style="color:var(--green)">No major gaps detected.</p>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="glass p-6">
+          <h3 class="font-bold mb-4">Learning Roadmap</h3>
+          <div class="space-y-3">
+            ${roadmap.map((s, i) => `
+              <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+                <p class="font-semibold">${i + 1}. ${safe(s.title || "Step")}</p>
+                ${s.why ? `<p class="text-sm mt-1" style="color:var(--text-muted)">${safe(s.why)}</p>` : ""}
+              </div>`).join("") || '<p class="text-sm" style="color:var(--text-muted)">No roadmap returned.</p>'}
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        document.querySelectorAll(".bar-fill[data-w]").forEach(b => b.style.width = b.getAttribute("data-w"));
+        const ring = byId("mr");
+        if (ring) ring.style.strokeDashoffset = String(ringCirc - (ringCirc * match / 100));
+      }, 250);
+
+      resetAssessmentUI();
+    }
+
+    function resetAssessmentUI() {
+      assessmentQuestions = [];
+      byId("assessment-start-wrap").classList.remove("hidden");
+      byId("assessment-loading").classList.add("hidden");
+      byId("assessment-error").classList.add("hidden");
+      byId("assessment-error").textContent = "";
+      if (byId("assessment-timer-wrap")) byId("assessment-timer-wrap").classList.add("hidden");
+      if (byId("assessment-timer")) byId("assessment-timer").textContent = "Timer 00:00";
+      byId("assessment-questions").innerHTML = "";
+      byId("assessment-submit-btn").classList.add("hidden");
+      byId("assessment-score").classList.add("hidden");
+      if (byId("assessment-feedback")) {
+        byId("assessment-feedback").textContent = "";
+        byId("assessment-feedback").classList.add("hidden");
+      }
+      if (byId("assessment-weak-skills")) {
+        byId("assessment-weak-skills").innerHTML = "";
+        byId("assessment-weak-skills").classList.add("hidden");
+      }
+      if (byId("assessment-skill-scores")) {
+        byId("assessment-skill-scores").innerHTML = "";
+        byId("assessment-skill-scores").classList.add("hidden");
+      }
+      byId("assessment-start-btn").disabled = false;
+    }
+
+    function setAssessmentError(message) {
+      const el = byId("assessment-error");
+      el.textContent = message;
+      el.classList.remove("hidden");
+    }
+
+    function renderAssessmentQuestions(questions) {
+      byId("assessment-questions").innerHTML = questions.map((q, i) => `
+        <div class="p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+          <p class="font-semibold mb-3">${i + 1}. ${safe(q.question || q.text || "")}</p>
+          <div class="space-y-2">
+            ${(Array.isArray(q.options) ? q.options : []).map(opt => `
+              <label class="assessment-option">
+                <input type="radio" name="assessment-q-${i}" value="${safe(opt)}" />
+                <span class="text-sm">${safe(opt)}</span>
+              </label>`).join("")}
+          </div>
+        </div>`).join("");
+      byId("assessment-submit-btn").classList.remove("hidden");
+    }
+
+    async function startAssessment() {
+      byId("assessment-error").classList.add("hidden");
+      byId("assessment-score").classList.add("hidden");
+      byId("assessment-questions").innerHTML = "";
+      byId("assessment-submit-btn").classList.add("hidden");
+      byId("assessment-loading").classList.remove("hidden");
+      byId("assessment-start-btn").disabled = true;
+
+      try {
+        const role = (latestAnalysisData && latestAnalysisData.job_title) || byId("jt").value.trim() || "Data Analyst";
+        const res = await fetch("/api/assessment/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role })
+        });
+        const data = await readJsonSafe(res);
+        if (!res.ok || data.error) throw new Error(data.error || "Could not start assessment.");
+        assessmentQuestions = Array.isArray(data.questions) ? data.questions : [];
+        if (!assessmentQuestions.length) throw new Error("No assessment questions were returned.");
+
+        byId("assessment-loading").classList.add("hidden");
+        byId("assessment-start-wrap").classList.add("hidden");
+        renderAssessmentQuestions(assessmentQuestions);
+      } catch (e) {
+        byId("assessment-loading").classList.add("hidden");
+        byId("assessment-start-btn").disabled = false;
+        setAssessmentError(e.message || "Failed to start assessment.");
+      }
+    }
+
+    async function submitAssessment() {
+      if (!assessmentQuestions.length) return setAssessmentError("Start assessment first.");
+      byId("assessment-error").classList.add("hidden");
+      const answers = assessmentQuestions.map((q, i) => {
+        const selected = document.querySelector(`input[name="assessment-q-${i}"]:checked`);
+        return { selected: selected ? selected.value : "", correct: q.correct || "" };
+      });
+      if (answers.some(a => !a.selected)) return setAssessmentError("Please answer all questions.");
+      byId("assessment-submit-btn").disabled = true;
+
+      try {
+        const res = await fetch("/api/assessment/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers })
+        });
+        const result = await readJsonSafe(res);
+        if (!res.ok || result.error) throw new Error(result.error || "Could not evaluate assessment.");
+        byId("assessment-score-value").textContent = Number(result.score || 0) + "%";
+        byId("assessment-score").classList.remove("hidden");
+      } catch (e) {
+        setAssessmentError(e.message || "Failed to submit assessment.");
+      } finally {
+        byId("assessment-submit-btn").disabled = false;
+      }
+    }
+  </script>
+  <script src="skillbridge.js"></script>
+</body>
+</html>
+
+
